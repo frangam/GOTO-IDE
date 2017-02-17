@@ -21,6 +21,8 @@ import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,8 +48,8 @@ import javax.swing.JTree;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Highlighter;
 import javax.swing.text.SimpleAttributeSet;
@@ -58,8 +60,6 @@ import javax.swing.tree.DefaultTreeModel;
 import com.fgarmo.plgoto.GOTO;
 import com.fgarmo.utilities.UnderlineHighlighter;
 import com.fgarmo.utilities.WordSearcher;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 
 public class MainView extends JFrame {
 
@@ -67,11 +67,14 @@ public class MainView extends JFrame {
 	private JTextField tfInputValues;
 	private JTree filesTree;
 	private List<String> openedFiles = new ArrayList<String>();
-	private JTextPane tfFileTextEditor;
 	private JTextPane tfConsole;
 	public static String word;
 	public static Highlighter highlighter = new UnderlineHighlighter(null);
 	private JTextField tfSearch;
+	private JTabbedPane codeEditorTab;
+	private List<TextEditorTab> allEditorTabs = new ArrayList<TextEditorTab>();
+	private TextEditorTab curEditorTab;
+	WordSearcher searcher;
 
 	/**
 	 * Launch the application.
@@ -172,28 +175,13 @@ public class MainView extends JFrame {
 					.addComponent(tabbedPane_1, GroupLayout.DEFAULT_SIZE, 210, Short.MAX_VALUE))
 		);
 		
-		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		splitPane.setRightComponent(tabbedPane);
+		codeEditorTab = new JTabbedPane(JTabbedPane.TOP);
+		splitPane.setRightComponent(codeEditorTab);
 		
-		JScrollPane scrollPane = new JScrollPane();
-		tabbedPane.addTab("New tab", null, scrollPane, null);
-		
-		tfFileTextEditor = new JTextPane();
-		scrollPane.setViewportView(tfFileTextEditor);
-		final WordSearcher searcher = new WordSearcher(tfFileTextEditor);
-		
-		tfFileTextEditor.getDocument().addDocumentListener(new DocumentListener() {
-			public void insertUpdate(DocumentEvent evt) {
-				searcher.search(word);
-		    }
-	
-		    public void removeUpdate(DocumentEvent evt) {
-		    	searcher.search(word);
-		    }
-	
-		    public void changedUpdate(DocumentEvent evt) {
-		    
-		    }
+		codeEditorTab.addChangeListener(new ChangeListener() {
+	        public void stateChanged(ChangeEvent e) {
+	        	changeTab();
+	        }
 	    });
 		
 		JScrollPane tabConsole = new JScrollPane();
@@ -243,12 +231,6 @@ public class MainView extends JFrame {
 		
 		tfInputValues = new JTextField();
 		
-		
-		
-		
-		
-
-		
 		toolBar_1.add(tfInputValues);
 		tfInputValues.setColumns(10);
 		
@@ -268,16 +250,20 @@ public class MainView extends JFrame {
 		tfSearch.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent e) {
-				word = tfSearch.getText().trim();
-		        int offset = searcher.search(word);
-		        if (offset != -1) {
-		          try {
-		            tfFileTextEditor.scrollRectToVisible(tfFileTextEditor
-		                .modelToView(offset));
-		          } catch (BadLocationException ex) {
-		        	  
-		          }
-		        }
+				if(allEditorTabs.size() > 0){
+					TextEditorTab currTextEditor = (TextEditorTab) codeEditorTab.getSelectedComponent();
+					
+					word = tfSearch.getText().trim();
+			        int offset = searcher.search(word);
+			        if (offset != -1) {
+			          try {
+			        	  currTextEditor.getTextPane().scrollRectToVisible(currTextEditor.getTextPane()
+			                .modelToView(offset));
+			          } catch (BadLocationException ex) {
+			        	  
+			          }
+			        }
+				}
 			}
 		});
 		contentPane.setLayout(gl_contentPane);
@@ -305,13 +291,21 @@ public class MainView extends JFrame {
 			openedFiles.add(fileAbsPath);
 			showResultInConsole("File opened: " + fileAbsPath);
 			
-		    System.out.println("Selected file: " + fileAbsPath);
+//		    System.out.println("Selected file: " + fileAbsPath);
 		    
 		    //add node
 		    DefaultTreeModel model = (DefaultTreeModel) filesTree.getModel();
 		    DefaultMutableTreeNode root = (DefaultMutableTreeNode) model.getRoot();
 		    model.insertNodeInto(new DefaultMutableTreeNode(fileName), root, root.getChildCount());
 		    model.reload();
+		    
+		    //create the text editor tab
+		    TextEditorTab newTab = new TextEditorTab();
+		    codeEditorTab.addTab(fileName.split("\\.")[0], null, newTab, null);
+		    allEditorTabs.add(newTab);
+		    codeEditorTab.setSelectedComponent(newTab);
+		    
+		    changeTab();
 		}
 	}
 	
@@ -345,5 +339,12 @@ public class MainView extends JFrame {
 			textPane.replaceSelection(s); // there is no selection, so inserts at caret
 		else
 			textPane.replaceSelection("\n"+s);
+	}
+	
+	private void changeTab(){
+		//set the searcher for searches in the curren new tab
+	    searcher = new WordSearcher(((TextEditorTab)codeEditorTab.getSelectedComponent()).getTextPane());
+	    
+	    
 	}
 }
