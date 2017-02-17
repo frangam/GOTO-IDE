@@ -18,7 +18,6 @@
 package com.fgarmo.view;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
@@ -27,8 +26,10 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -66,10 +67,9 @@ import javax.swing.text.Highlighter;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 
-import com.fgarmo.plgoto.GOTO;
+import com.fgarmo.plgoto.GOTOCompiler;
 import com.fgarmo.utilities.UnderlineHighlighter;
 import com.fgarmo.utilities.WordSearcher;
 
@@ -331,9 +331,12 @@ public class MainView extends JFrame {
 	}
 	
 	private void run(){
-		GOTO myGOTO = new GOTO();
 		try{
-			myGOTO.run(openedFiles.toArray(new String[openedFiles.size()]));
+			String[] args = openedFiles.toArray(new String[openedFiles.size()+1]);
+			args[args.length-1] = "false";
+			
+			GOTOCompiler.main(args);
+			showResultInConsole("Y = " + args[0]);
 		}
 		catch(RuntimeException ex){
 			showErrorInConsole(ex.getMessage());
@@ -495,4 +498,27 @@ public class MainView extends JFrame {
 	    newTab.active();
 	    
 	}
+	
+//	private void captureSystemOut(){
+////		System.out.println("One");
+//		 
+//	    // Storing console output to consoleStorage.
+//	    ByteArrayOutputStream consoleStorage = new ByteArrayOutputStream();
+//	    PrintStream newConsole = System.out;
+//	    System.setOut(new PrintStream(consoleStorage));
+//	 
+//	    // Here all System.out.println() calls will be stored in consoleStorage.
+////	    System.out.println("two");     // Note: The output "two" you see from the console 
+//	                                //        doesn't come from this line but from the lines below(newConsole.println());
+//	 
+//	    newConsole.println(consoleStorage.toString());
+//	    newConsole.println(consoleStorage.toString());
+//	 
+//	    // Restore back the standard console output.
+//	    System.setOut(newConsole);
+//	 
+//	    // Print to console.
+//	    System.out.println("three");
+//	    System.out.println(consoleStorage.toString());
+//	}
 }
