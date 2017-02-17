@@ -24,7 +24,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.GroupLayout;
@@ -50,6 +56,7 @@ import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Highlighter;
 import javax.swing.text.SimpleAttributeSet;
@@ -62,7 +69,8 @@ import com.fgarmo.utilities.UnderlineHighlighter;
 import com.fgarmo.utilities.WordSearcher;
 
 public class MainView extends JFrame {
-
+	public static final String GOTO_FILE_EXTENSION = "goto";
+	
 	private JPanel contentPane;
 	private JTextField tfInputValues;
 	private JTree filesTree;
@@ -201,11 +209,21 @@ public class MainView extends JFrame {
 		toolBar.add(btnOpenFile);
 		
 		JButton btnNewButton = new JButton("");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				createNewFile();
+			}
+		});
 		btnNewButton.setToolTipText("New file");
 		btnNewButton.setIcon(new ImageIcon(MainView.class.getResource("/com/fgarmo/resources/images32/1487297659_file-code.png")));
 		toolBar.add(btnNewButton);
 		
 		JButton button = new JButton("");
+		button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				saveCurrentFile();
+			}
+		});
 		button.setToolTipText("Save");
 		button.setIcon(new ImageIcon(MainView.class.getResource("/com/fgarmo/resources/images32/1487297525_floppy.png")));
 		toolBar.add(button);
@@ -281,43 +299,115 @@ public class MainView extends JFrame {
 	
 	private void openNewFile(){
 		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setMultiSelectionEnabled(true);
+		fileChooser.setFileFilter(new FileNameExtensionFilter("GOTO", "goto"));
+		fileChooser.setAcceptAllFileFilterUsed(false); //only accept GOTO files
 		fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
 		int res = fileChooser.showOpenDialog(getParent());
 		
 		if (res == JFileChooser.APPROVE_OPTION) {
-			File selectedFile = fileChooser.getSelectedFile();
-			String fileName = selectedFile.getName();
-			String fileAbsPath = selectedFile.getAbsolutePath();
-			openedFiles.add(fileAbsPath);
-			showResultInConsole("File opened: " + fileAbsPath);
+			File[] selectedfiles = fileChooser.getSelectedFiles();
+			Arrays.sort(selectedfiles); //order files in alphabetical order by its name
 			
-//		    System.out.println("Selected file: " + fileAbsPath);
-		    
-		    //add node
-		    DefaultTreeModel model = (DefaultTreeModel) filesTree.getModel();
-		    DefaultMutableTreeNode root = (DefaultMutableTreeNode) model.getRoot();
-		    model.insertNodeInto(new DefaultMutableTreeNode(fileName), root, root.getChildCount());
-		    model.reload();
-		    
-		    //create the text editor tab
-		    TextEditorTab newTab = new TextEditorTab();
-		    codeEditorTab.addTab(fileName.split("\\.")[0], null, newTab, null);
-		    allEditorTabs.add(newTab);
-		    codeEditorTab.setSelectedComponent(newTab);
-		    
+			for(File selectedFile : selectedfiles) {
+				addFileToTreeAndTab(selectedFile);
+			}
+			
+			//open first file in a new tab
+			TextEditorTab firstFileTab = getTabByFile(selectedfiles[0]);
+			codeEditorTab.setSelectedComponent(firstFileTab);
+		    changeTab();
+		    saveCurrentFile();
+		}
+	}
+	
+	private void createNewFile(){
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setFileFilter(new FileNameExtensionFilter(GOTO_FILE_EXTENSION.toUpperCase(), GOTO_FILE_EXTENSION));
+		fileChooser.setAcceptAllFileFilterUsed(false); //only accept GOTO files
+		
+		int res = fileChooser.showSaveDialog(getParent());
+		if (res == JFileChooser.APPROVE_OPTION) {
+			File selectedfile = fileChooser.getSelectedFile();
+			String fileName = selectedfile.getName();
+			String[] f = fileName.split("\\.");
+			
+			//it has an extension
+			if(f.length > 1){
+				String extension = f[1];
+				if(!extension.equals(GOTO_FILE_EXTENSION)){
+					selectedfile = new File(selectedfile.getParentFile() + selectedfile.getName() + "." + GOTO_FILE_EXTENSION); //put the correct extension
+				}
+			}
+			else{
+				selectedfile = new File(selectedfile.toString() + "." + GOTO_FILE_EXTENSION); //put the correct extension
+			}
+			
+			saveFile(selectedfile, "");
+			addFileToTreeAndTab(selectedfile);
+			codeEditorTab.setSelectedComponent(getTabByFile(selectedfile));
 		    changeTab();
 		}
 	}
 	
+	private void saveCurrentFile(){
+		if(allEditorTabs.size() > 0){
+			TextEditorTab fileTab = (TextEditorTab) codeEditorTab.getSelectedComponent();
+			File file = fileTab.getFile();
+			saveFile(file, fileTab.getContent());			
+		}
+	}
+	
+	private void saveFile(File file, String content){
+		try {	
+			Files.write(Paths.get(file.getAbsolutePath()), content.getBytes());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void addFileToTreeAndTab(File file){
+		String fileName = file.getName();
+		String fileAbsPath = file.getAbsolutePath();
+		openedFiles.add(fileAbsPath);
+		showResultInConsole("File opened: " + fileAbsPath);
+		
+//		System.out.println("Selected file: " + fileAbsPath);
+	    
+	    //add node
+	    DefaultTreeModel model = (DefaultTreeModel) filesTree.getModel();
+	    DefaultMutableTreeNode root = (DefaultMutableTreeNode) model.getRoot();
+	    model.insertNodeInto(new DefaultMutableTreeNode(fileName), root, root.getChildCount());
+	    model.reload();
+	    
+	    //create the text editor tab
+	    TextEditorTab newTab = new TextEditorTab(file); //create a new tab linking this new opened file
+	    codeEditorTab.addTab(fileName.split("\\.")[0], null, newTab, null);
+	    allEditorTabs.add(newTab);
+	}
+	
+	
+	
+	private TextEditorTab getTabByFile(File file){
+		TextEditorTab res = null;
+		
+		for(TextEditorTab tab : allEditorTabs){
+			if(tab.getFile() == file){
+				res = tab;
+				break;
+			}
+		}
+		
+		return res;
+	}
+	
 	private void showErrorInConsole(String message){
-		sM(tfConsole, message, Color.red);
+		putTextInTextPaneWithColor(tfConsole, message, Color.red);
 	}
 	
 	private void showResultInConsole(String message){
-		sM(tfConsole, message, Color.black);
+		putTextInTextPaneWithColor(tfConsole, message, Color.black);
 	}
-	
-	
 	
 	private void clearJTree(JTree tree){
 		DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
@@ -326,8 +416,7 @@ public class MainView extends JFrame {
 		model.reload();
 	}
 	
-	public void sM(JTextPane textPane, String s, Color c) {
-        // bad: instiantiates a new AttributeSet object on each call
+	private void putTextInTextPaneWithColor(JTextPane textPane, String s, Color c) {
 		SimpleAttributeSet aset = new SimpleAttributeSet();
 		StyleConstants.setForeground(aset, c);
 		
