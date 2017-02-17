@@ -458,7 +458,7 @@ public class MainView extends JFrame {
 	    searcher = new WordSearcher(newTab.getTextPane());
 	    
 	    //pass focus to text pane of current tab
-	    newTab.getTextPane().requestFocus();
+	    newTab.active();
 	    
 	}
 }

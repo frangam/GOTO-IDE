@@ -16,6 +16,8 @@
 
 package com.fgarmo.view;
 
+import java.awt.Color;
+import java.awt.Cursor;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,6 +33,8 @@ import javax.swing.text.StyleContext;
 import javax.swing.text.TabSet;
 import javax.swing.text.TabStop;
 import javax.swing.tree.DefaultMutableTreeNode;
+
+import com.fgarmo.utilities.LineHighlighter;
 
 public class TextEditorTab extends JScrollPane {
 	/******************************************
@@ -77,7 +81,7 @@ public class TextEditorTab extends JScrollPane {
 		this.node = node;
 		this.file = file;
 		textPane = new JTextPane();
-		
+		setViewportView(textPane);
 		
 		TabStop[] tabs = new TabStop[TOTAL_STOP_TABS];
 		for(int i=0; i<TOTAL_STOP_TABS; i++)
@@ -93,8 +97,18 @@ public class TextEditorTab extends JScrollPane {
         textPane.setParagraphAttributes(aset, false);
         
         textPane.setText(getFileContent());
-		
-		setViewportView(textPane);
+       
+        // add our custom text line number
+        TextLineNumber tln = new TextLineNumber(textPane, 4, new Color(0.5f, 0.2f, 1, 1f));
+        setRowHeaderView(tln);
+        
+        //create our custom line highlighter
+        new LineHighlighter(textPane, new Color(0.2f, 0.8f, 1, 0.15f));
+        
+        //init the cursor at the top
+        textPane.setCaretPosition(0);
+        
+        active();
 	}
 	
 	/******************************************
@@ -111,5 +125,12 @@ public class TextEditorTab extends JScrollPane {
 		}
 		
 		return content;
+	}
+	
+	public void active(){
+		textPane.setCursor(new Cursor(Cursor.TEXT_CURSOR));
+        textPane.getCaret().setVisible(true);
+        textPane.requestFocus();
+        
 	}
 }
