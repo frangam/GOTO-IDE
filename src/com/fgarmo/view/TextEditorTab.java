@@ -34,6 +34,7 @@ import javax.swing.text.TabSet;
 import javax.swing.text.TabStop;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import com.fgarmo.utilities.Constants;
 import com.fgarmo.utilities.LineHighlighter;
 
 public class TextEditorTab extends JScrollPane {
@@ -99,11 +100,11 @@ public class TextEditorTab extends JScrollPane {
         textPane.setText(getFileContent());
        
         // add our custom text line number
-        TextLineNumber tln = new TextLineNumber(textPane, 4, new Color(0.5f, 0.2f, 1, 1f));
+        TextLineNumber tln = new TextLineNumber(textPane, 4, Constants.COLOR_TEXT_LINE_NUMBER_HIGHTLIGH);
         setRowHeaderView(tln);
         
         //create our custom line highlighter
-        new LineHighlighter(textPane, new Color(0.2f, 0.8f, 1, 0.15f));
+        new LineHighlighter(textPane, Constants.COLOR_LINE_HIGHTLIGH);
         
         //init the cursor at the top
         textPane.setCaretPosition(0);

@@ -18,15 +18,17 @@
 package com.fgarmo.view;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -56,26 +58,27 @@ import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Highlighter;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 
 import com.fgarmo.plgoto.GOTO;
 import com.fgarmo.utilities.UnderlineHighlighter;
 import com.fgarmo.utilities.WordSearcher;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.event.TreeSelectionEvent;
 
 public class MainView extends JFrame {
 	public static final String GOTO_FILE_EXTENSION = "goto";
 	
 	private JPanel contentPane;
 	private JTextField tfInputValues;
-	private JTree filesTree;
+	private RowSelectionTree filesTree;
 	private List<String> openedFiles = new ArrayList<String>();
 	private JTextPane tfConsole;
 	public static String word;
@@ -132,11 +135,83 @@ public class MainView extends JFrame {
 		
 		JSplitPane splitPane = new JSplitPane();
 		
-		JPanel panel_2 = new JPanel();
-		panel_2.setBackground(Color.WHITE);
-		splitPane.setLeftComponent(panel_2);
+
 		
-		filesTree = new JTree();
+		//-----------
+		//custom repainting for the tree
+		FocusListener fl = new FocusListener() {
+		      @Override public void focusGained(FocusEvent e) {
+		        e.getComponent().repaint();
+		      }
+		      @Override public void focusLost(FocusEvent e) {
+		        e.getComponent().repaint();
+		      }
+		    };
+		GroupLayout gl_contentPane = new GroupLayout(contentPane);
+		gl_contentPane.setHorizontalGroup(
+			gl_contentPane.createParallelGroup(Alignment.LEADING)
+				.addComponent(toolBar, GroupLayout.DEFAULT_SIZE, 1014, Short.MAX_VALUE)
+				.addGroup(Alignment.TRAILING, gl_contentPane.createSequentialGroup()
+					.addContainerGap()
+					.addGroup(gl_contentPane.createParallelGroup(Alignment.TRAILING)
+						.addComponent(splitPane, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 1002, Short.MAX_VALUE)
+						.addComponent(tabbedPane_1, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 1002, Short.MAX_VALUE))
+					.addContainerGap())
+		);
+		gl_contentPane.setVerticalGroup(
+			gl_contentPane.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_contentPane.createSequentialGroup()
+					.addComponent(toolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+					.addGap(18)
+					.addComponent(splitPane, GroupLayout.DEFAULT_SIZE, 453, Short.MAX_VALUE)
+					.addPreferredGap(ComponentPlacement.UNRELATED)
+					.addComponent(tabbedPane_1, GroupLayout.DEFAULT_SIZE, 187, Short.MAX_VALUE))
+		);
+		
+		codeEditorTab = new JTabbedPane(JTabbedPane.TOP);
+		splitPane.setRightComponent(codeEditorTab);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		splitPane.setLeftComponent(scrollPane);
+		
+		//set minimum size of each panel
+		Dimension minimumSize = new Dimension(200, 500);
+		scrollPane.setMinimumSize(minimumSize);
+		codeEditorTab.setMinimumSize(minimumSize);
+		
+		filesTree = new RowSelectionTree();
+		scrollPane.setViewportView(filesTree);
+		
+		
+		    
+	      
+        //-----------
+        
+//        ////Source: http://stackoverflow.com/questions/11483116/how-to-correctly-colour-a-jtree-and-all-nodes
+//        filesTree.setCellRenderer(new DefaultTreeCellRenderer()
+//        {
+//
+//            @Override
+//            public Component getTreeCellRendererComponent( JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus)
+//            {
+//                super.getTreeCellRendererComponent( tree, value, sel, expanded, leaf, row, hasFocus);
+//                setTextSelectionColor(Color.white);
+//                setBackgroundNonSelectionColor(Color.white);
+//                setBackgroundSelectionColor(Constants.COLOR_FILE_EXPLORER_NODE);
+//                setTextNonSelectionColor(Color.BLACK);
+//                setTextSelectionColor(Color.BLACK);
+//                ImageIcon tDoc = new ImageIcon(MainView.class.getResource("/com/fgarmo/resources/images16/1487298560_file-code.png"));
+//                ImageIcon tOpen = new ImageIcon(MainView.class.getResource("/com/fgarmo/resources/images16/1487298560_file-code.png"));
+//                ImageIcon tClosed = new ImageIcon(MainView.class.getResource("/com/fgarmo/resources/images16/1487298560_file-code.png"));
+//                setClosedIcon(tClosed);
+//                setOpenIcon(tOpen);
+//                setLeafIcon(tDoc);
+//                setBorderSelectionColor(null);
+//                return this;
+//            }
+//        });
+        
+        
 		filesTree.addTreeSelectionListener(new TreeSelectionListener() {
 			public void valueChanged(TreeSelectionEvent e) {
 		        DefaultMutableTreeNode node = (DefaultMutableTreeNode) filesTree.getLastSelectedPathComponent();
@@ -145,6 +220,7 @@ public class MainView extends JFrame {
 		        	changeTab(getTabByTreeNodeExplorer(node));
 			}
 		});
+		//for not showing root element
 		filesTree.setRootVisible(false);
 		filesTree.setModel(new DefaultTreeModel(
 			new DefaultMutableTreeNode("JTree") {
@@ -152,48 +228,6 @@ public class MainView extends JFrame {
 				}
 			}
 		));
-		
-				GroupLayout gl_panel_2 = new GroupLayout(panel_2);
-				gl_panel_2.setHorizontalGroup(
-					gl_panel_2.createParallelGroup(Alignment.LEADING)
-						.addGroup(gl_panel_2.createSequentialGroup()
-							.addContainerGap()
-							.addComponent(filesTree, GroupLayout.DEFAULT_SIZE, 136, Short.MAX_VALUE)
-							.addContainerGap())
-				);
-				gl_panel_2.setVerticalGroup(
-					gl_panel_2.createParallelGroup(Alignment.LEADING)
-						.addGroup(gl_panel_2.createSequentialGroup()
-							.addContainerGap()
-							.addComponent(filesTree, GroupLayout.DEFAULT_SIZE, 411, Short.MAX_VALUE)
-							.addContainerGap())
-				);
-				panel_2.setLayout(gl_panel_2);
-		GroupLayout gl_contentPane = new GroupLayout(contentPane);
-		gl_contentPane.setHorizontalGroup(
-			gl_contentPane.createParallelGroup(Alignment.LEADING)
-				.addComponent(toolBar, GroupLayout.DEFAULT_SIZE, 1014, Short.MAX_VALUE)
-				.addGroup(gl_contentPane.createSequentialGroup()
-					.addGap(12)
-					.addComponent(tabbedPane_1, GroupLayout.DEFAULT_SIZE, 996, Short.MAX_VALUE)
-					.addContainerGap())
-				.addGroup(gl_contentPane.createSequentialGroup()
-					.addGap(12)
-					.addComponent(splitPane, GroupLayout.DEFAULT_SIZE, 981, Short.MAX_VALUE)
-					.addGap(21))
-		);
-		gl_contentPane.setVerticalGroup(
-			gl_contentPane.createParallelGroup(Alignment.LEADING)
-				.addGroup(gl_contentPane.createSequentialGroup()
-					.addComponent(toolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-					.addPreferredGap(ComponentPlacement.UNRELATED)
-					.addComponent(splitPane, GroupLayout.DEFAULT_SIZE, 436, Short.MAX_VALUE)
-					.addPreferredGap(ComponentPlacement.UNRELATED)
-					.addComponent(tabbedPane_1, GroupLayout.DEFAULT_SIZE, 210, Short.MAX_VALUE))
-		);
-		
-		codeEditorTab = new JTabbedPane(JTabbedPane.TOP);
-		splitPane.setRightComponent(codeEditorTab);
 		
 		codeEditorTab.addChangeListener(new ChangeListener() {
 	        public void stateChanged(ChangeEvent e) {
