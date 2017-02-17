@@ -116,33 +116,85 @@ public class MainView extends JFrame {
 		JToolBar toolBar = new JToolBar();
 		toolBar.setFloatable(false);
 		
-		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		
 		JTabbedPane tabbedPane_1 = new JTabbedPane(JTabbedPane.TOP);
+		
+		JSplitPane splitPane = new JSplitPane();
+		
+		JPanel panel_2 = new JPanel();
+		panel_2.setBackground(Color.WHITE);
+		splitPane.setLeftComponent(panel_2);
+		
+		filesTree = new JTree();
+		filesTree.setRootVisible(false);
+		filesTree.setModel(new DefaultTreeModel(
+			new DefaultMutableTreeNode("JTree") {
+				{
+				}
+			}
+		));
+		
+				GroupLayout gl_panel_2 = new GroupLayout(panel_2);
+				gl_panel_2.setHorizontalGroup(
+					gl_panel_2.createParallelGroup(Alignment.LEADING)
+						.addGroup(gl_panel_2.createSequentialGroup()
+							.addContainerGap()
+							.addComponent(filesTree, GroupLayout.DEFAULT_SIZE, 136, Short.MAX_VALUE)
+							.addContainerGap())
+				);
+				gl_panel_2.setVerticalGroup(
+					gl_panel_2.createParallelGroup(Alignment.LEADING)
+						.addGroup(gl_panel_2.createSequentialGroup()
+							.addContainerGap()
+							.addComponent(filesTree, GroupLayout.DEFAULT_SIZE, 411, Short.MAX_VALUE)
+							.addContainerGap())
+				);
+				panel_2.setLayout(gl_panel_2);
 		GroupLayout gl_contentPane = new GroupLayout(contentPane);
 		gl_contentPane.setHorizontalGroup(
 			gl_contentPane.createParallelGroup(Alignment.LEADING)
 				.addComponent(toolBar, GroupLayout.DEFAULT_SIZE, 1014, Short.MAX_VALUE)
 				.addGroup(gl_contentPane.createSequentialGroup()
-					.addGap(6)
-					.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
-						.addGroup(gl_contentPane.createSequentialGroup()
-							.addGap(6)
-							.addComponent(tabbedPane_1, GroupLayout.DEFAULT_SIZE, 996, Short.MAX_VALUE)
-							.addContainerGap())
-						.addGroup(gl_contentPane.createSequentialGroup()
-							.addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 1002, Short.MAX_VALUE)
-							.addGap(6))))
+					.addGap(12)
+					.addComponent(tabbedPane_1, GroupLayout.DEFAULT_SIZE, 996, Short.MAX_VALUE)
+					.addContainerGap())
+				.addGroup(gl_contentPane.createSequentialGroup()
+					.addGap(12)
+					.addComponent(splitPane, GroupLayout.DEFAULT_SIZE, 981, Short.MAX_VALUE)
+					.addGap(21))
 		);
 		gl_contentPane.setVerticalGroup(
 			gl_contentPane.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_contentPane.createSequentialGroup()
 					.addComponent(toolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-					.addPreferredGap(ComponentPlacement.RELATED)
-					.addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 473, Short.MAX_VALUE)
-					.addPreferredGap(ComponentPlacement.RELATED)
-					.addComponent(tabbedPane_1, GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE))
+					.addPreferredGap(ComponentPlacement.UNRELATED)
+					.addComponent(splitPane, GroupLayout.DEFAULT_SIZE, 436, Short.MAX_VALUE)
+					.addPreferredGap(ComponentPlacement.UNRELATED)
+					.addComponent(tabbedPane_1, GroupLayout.DEFAULT_SIZE, 210, Short.MAX_VALUE))
 		);
+		
+		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		splitPane.setRightComponent(tabbedPane);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		tabbedPane.addTab("New tab", null, scrollPane, null);
+		
+		tfFileTextEditor = new JTextPane();
+		scrollPane.setViewportView(tfFileTextEditor);
+		final WordSearcher searcher = new WordSearcher(tfFileTextEditor);
+		
+		tfFileTextEditor.getDocument().addDocumentListener(new DocumentListener() {
+			public void insertUpdate(DocumentEvent evt) {
+				searcher.search(word);
+		    }
+	
+		    public void removeUpdate(DocumentEvent evt) {
+		    	searcher.search(word);
+		    }
+	
+		    public void changedUpdate(DocumentEvent evt) {
+		    
+		    }
+	    });
 		
 		JScrollPane tabConsole = new JScrollPane();
 		tabbedPane_1.addTab("Console", null, tabConsole, null);
@@ -211,57 +263,6 @@ public class MainView extends JFrame {
 		toolBar_1.add(tfSearch);
 		tfSearch.setColumns(10);
 		
-		JPanel panel = new JPanel();
-		tabbedPane.addTab("Code", null, panel, null);
-		
-		JSplitPane splitPane = new JSplitPane();
-		GroupLayout gl_panel = new GroupLayout(panel);
-		gl_panel.setHorizontalGroup(
-			gl_panel.createParallelGroup(Alignment.LEADING)
-				.addComponent(splitPane, GroupLayout.DEFAULT_SIZE, 981, Short.MAX_VALUE)
-		);
-		gl_panel.setVerticalGroup(
-			gl_panel.createParallelGroup(Alignment.LEADING)
-				.addComponent(splitPane, GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE)
-		);
-		
-		JPanel panel_2 = new JPanel();
-		panel_2.setBackground(Color.WHITE);
-		splitPane.setLeftComponent(panel_2);
-		
-		filesTree = new JTree();
-		filesTree.setRootVisible(false);
-		filesTree.setModel(new DefaultTreeModel(
-			new DefaultMutableTreeNode("JTree") {
-				{
-				}
-			}
-		));
-
-		GroupLayout gl_panel_2 = new GroupLayout(panel_2);
-		gl_panel_2.setHorizontalGroup(
-			gl_panel_2.createParallelGroup(Alignment.LEADING)
-				.addGroup(gl_panel_2.createSequentialGroup()
-					.addContainerGap()
-					.addComponent(filesTree, GroupLayout.DEFAULT_SIZE, 136, Short.MAX_VALUE)
-					.addContainerGap())
-		);
-		gl_panel_2.setVerticalGroup(
-			gl_panel_2.createParallelGroup(Alignment.LEADING)
-				.addGroup(gl_panel_2.createSequentialGroup()
-					.addContainerGap()
-					.addComponent(filesTree, GroupLayout.DEFAULT_SIZE, 411, Short.MAX_VALUE)
-					.addContainerGap())
-		);
-		panel_2.setLayout(gl_panel_2);
-		
-		JScrollPane scrollPane = new JScrollPane();
-		splitPane.setRightComponent(scrollPane);
-		
-		tfFileTextEditor = new JTextPane();
-		scrollPane.setViewportView(tfFileTextEditor);
-		final WordSearcher searcher = new WordSearcher(tfFileTextEditor);
-		
 		
 		
 		tfSearch.addKeyListener(new KeyAdapter() {
@@ -279,22 +280,6 @@ public class MainView extends JFrame {
 		        }
 			}
 		});
-		
-		tfFileTextEditor.getDocument().addDocumentListener(new DocumentListener() {
-			public void insertUpdate(DocumentEvent evt) {
-				searcher.search(word);
-		    }
-	
-		    public void removeUpdate(DocumentEvent evt) {
-		    	searcher.search(word);
-		    }
-	
-		    public void changedUpdate(DocumentEvent evt) {
-		    
-		    }
-	    });
-		
-		panel.setLayout(gl_panel);
 		contentPane.setLayout(gl_contentPane);
 	}
 	
