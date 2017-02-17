@@ -30,6 +30,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.text.TabSet;
 import javax.swing.text.TabStop;
+import javax.swing.tree.DefaultMutableTreeNode;
 
 public class TextEditorTab extends JScrollPane {
 	/******************************************
@@ -41,6 +42,7 @@ public class TextEditorTab extends JScrollPane {
     * Fields
     ******************************************/
 	private JTextPane textPane;
+	private DefaultMutableTreeNode node; //the node that opens this tb
 	private File file; //the linked file with this text editor tab
 	
 	/******************************************
@@ -55,6 +57,12 @@ public class TextEditorTab extends JScrollPane {
 	public File getFile() {
 		return file;
 	}
+	public DefaultMutableTreeNode getNode() {
+		return node;
+	}
+	public void setNode(DefaultMutableTreeNode node) {
+		this.node = node;
+	}
 	public void setFile(File file) {
 		this.file = file;
 	}
@@ -65,7 +73,8 @@ public class TextEditorTab extends JScrollPane {
 	/******************************************
     * Constructors
     ******************************************/
-	public TextEditorTab(File file) {
+	public TextEditorTab(File file, DefaultMutableTreeNode node) {
+		this.node = node;
 		this.file = file;
 		textPane = new JTextPane();
 		

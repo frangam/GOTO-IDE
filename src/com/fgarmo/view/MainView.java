@@ -67,6 +67,8 @@ import javax.swing.tree.DefaultTreeModel;
 import com.fgarmo.plgoto.GOTO;
 import com.fgarmo.utilities.UnderlineHighlighter;
 import com.fgarmo.utilities.WordSearcher;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
 
 public class MainView extends JFrame {
 	public static final String GOTO_FILE_EXTENSION = "goto";
@@ -81,7 +83,6 @@ public class MainView extends JFrame {
 	private JTextField tfSearch;
 	private JTabbedPane codeEditorTab;
 	private List<TextEditorTab> allEditorTabs = new ArrayList<TextEditorTab>();
-	private TextEditorTab curEditorTab;
 	WordSearcher searcher;
 
 	/**
@@ -136,6 +137,14 @@ public class MainView extends JFrame {
 		splitPane.setLeftComponent(panel_2);
 		
 		filesTree = new JTree();
+		filesTree.addTreeSelectionListener(new TreeSelectionListener() {
+			public void valueChanged(TreeSelectionEvent e) {
+		        DefaultMutableTreeNode node = (DefaultMutableTreeNode) filesTree.getLastSelectedPathComponent();
+
+		        if (node != null)
+		        	changeTab(getTabByTreeNodeExplorer(node));
+			}
+		});
 		filesTree.setRootVisible(false);
 		filesTree.setModel(new DefaultTreeModel(
 			new DefaultMutableTreeNode("JTree") {
@@ -188,7 +197,7 @@ public class MainView extends JFrame {
 		
 		codeEditorTab.addChangeListener(new ChangeListener() {
 	        public void stateChanged(ChangeEvent e) {
-	        	changeTab();
+	        	changeTab(getCurrentEditorTab());
 	        }
 	    });
 		
@@ -314,9 +323,7 @@ public class MainView extends JFrame {
 			}
 			
 			//open first file in a new tab
-			TextEditorTab firstFileTab = getTabByFile(selectedfiles[0]);
-			codeEditorTab.setSelectedComponent(firstFileTab);
-		    changeTab();
+		    changeTab(getTabByFile(selectedfiles[0]));
 		    saveCurrentFile();
 		}
 	}
@@ -334,9 +341,10 @@ public class MainView extends JFrame {
 			
 			//it has an extension
 			if(f.length > 1){
-				String extension = f[1];
+				String extension = f[f.length-1];
+				String name = f[0];
 				if(!extension.equals(GOTO_FILE_EXTENSION)){
-					selectedfile = new File(selectedfile.getParentFile() + selectedfile.getName() + "." + GOTO_FILE_EXTENSION); //put the correct extension
+					selectedfile = new File(selectedfile.getParentFile()+"/" + name + "." + GOTO_FILE_EXTENSION); //put the correct extension
 				}
 			}
 			else{
@@ -345,8 +353,7 @@ public class MainView extends JFrame {
 			
 			saveFile(selectedfile, "");
 			addFileToTreeAndTab(selectedfile);
-			codeEditorTab.setSelectedComponent(getTabByFile(selectedfile));
-		    changeTab();
+		    changeTab(getTabByFile(selectedfile));
 		}
 	}
 	
@@ -377,17 +384,31 @@ public class MainView extends JFrame {
 	    //add node
 	    DefaultTreeModel model = (DefaultTreeModel) filesTree.getModel();
 	    DefaultMutableTreeNode root = (DefaultMutableTreeNode) model.getRoot();
-	    model.insertNodeInto(new DefaultMutableTreeNode(fileName), root, root.getChildCount());
+	    DefaultMutableTreeNode node = new DefaultMutableTreeNode(fileName);
+	    model.insertNodeInto(node, root, root.getChildCount());
 	    model.reload();
 	    
 	    //create the text editor tab
-	    TextEditorTab newTab = new TextEditorTab(file); //create a new tab linking this new opened file
+	    TextEditorTab newTab = new TextEditorTab(file, node); //create a new tab linking this new opened file
 	    codeEditorTab.addTab(fileName.split("\\.")[0], null, newTab, null);
 	    allEditorTabs.add(newTab);
 	}
 	
-	
-	
+	private TextEditorTab getCurrentEditorTab(){
+		return (TextEditorTab) codeEditorTab.getSelectedComponent();
+	}
+	private TextEditorTab getTabByTreeNodeExplorer(DefaultMutableTreeNode node){
+		TextEditorTab res = null;
+		
+		for(TextEditorTab tab : allEditorTabs){
+			if(tab.getNode() == node){
+				res = tab;
+				break;
+			}
+		}
+		
+		return res;
+	}
 	private TextEditorTab getTabByFile(File file){
 		TextEditorTab res = null;
 		
@@ -430,10 +451,14 @@ public class MainView extends JFrame {
 			textPane.replaceSelection("\n"+s);
 	}
 	
-	private void changeTab(){
+	private void changeTab(TextEditorTab newTab){
+		codeEditorTab.setSelectedComponent(newTab);		
+		
 		//set the searcher for searches in the curren new tab
-	    searcher = new WordSearcher(((TextEditorTab)codeEditorTab.getSelectedComponent()).getTextPane());
+	    searcher = new WordSearcher(newTab.getTextPane());
 	    
+	    //pass focus to text pane of current tab
+	    newTab.getTextPane().requestFocus();
 	    
 	}
 }
