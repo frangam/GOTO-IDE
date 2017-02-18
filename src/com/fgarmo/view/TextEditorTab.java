@@ -22,11 +22,19 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
@@ -49,6 +57,8 @@ public class TextEditorTab extends JScrollPane {
 	private JTextPane textPane;
 	private DefaultMutableTreeNode node; //the node that opens this tb
 	private File file; //the linked file with this text editor tab
+	
+
 	
 	/******************************************
     * Getters & Setters
@@ -81,7 +91,8 @@ public class TextEditorTab extends JScrollPane {
 	public TextEditorTab(File file, DefaultMutableTreeNode node) {
 		this.node = node;
 		this.file = file;
-		textPane = new JTextPane();
+		textPane = new JTextPane(); 
+		textPane.getDocument().putProperty(DefaultEditorKit.EndOfLineStringProperty, "\n");
 		setViewportView(textPane);
 		
 		TabStop[] tabs = new TabStop[TOTAL_STOP_TABS];
@@ -98,7 +109,25 @@ public class TextEditorTab extends JScrollPane {
         textPane.setParagraphAttributes(aset, false);
         
         textPane.setText(getFileContent());
-       
+        
+        textPane.getDocument().addDocumentListener(new DocumentListener() 
+        {
+            public void changedUpdate(DocumentEvent event) {}
+
+            public void insertUpdate(DocumentEvent event)
+            {
+                checkForHighlights();
+            }
+
+            public void removeUpdate(DocumentEvent event)
+            {
+                checkForHighlights();
+            }
+        });
+        
+        //check syntax first time
+        checkForHighlights();
+			
         // add our custom text line number
         TextLineNumber tln = new TextLineNumber(textPane, 4, Constants.COLOR_TEXT_LINE_NUMBER_HIGHTLIGH);
         setRowHeaderView(tln);
@@ -108,6 +137,8 @@ public class TextEditorTab extends JScrollPane {
         
         //init the cursor at the top
         textPane.setCaretPosition(0);
+        
+        
         
         active();
 	}
@@ -134,4 +165,81 @@ public class TextEditorTab extends JScrollPane {
         textPane.requestFocus();
         
 	}
+	
+//	public void highLight(){
+//		Highlighter highlighter = textPane.getHighlighter();
+//        HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.pink);
+//        List<String> keyWords = Arrays.asList("<-", "GOTO", "IF");
+//        String content = getContent();
+//        
+//        for(String key : keyWords){
+//	        int p0 = content.indexOf(key);
+//	        int p1 = p0 + key.length();
+//	        
+//	        try {
+//
+//				
+//				while ( p0 >= 0 ) {
+//				    int len = key.length();
+//				    highlighter.addHighlight(p0, p1, DefaultHighlighter.DefaultPainter);
+//				    p0 = content.indexOf(key, p0+len);
+//				}
+//				
+//			} catch (BadLocationException e) {
+//				e.printStackTrace();
+//			}
+//        }
+//	}
+	
+//	public Pattern matcher = Pattern.compile("GOTO|IF");
+	
+	
+	//Source 1: http://stackoverflow.com/questions/21790781/problems-highlighting-keywords-in-jtextpane
+	// Source 2: http://andreinc.net/2013/07/15/how-to-customize-the-font-inside-a-jtextpane-component-java-swing-highlight-java-keywords-inside-a-jtextpane/
+	private void checkForHighlights(){
+        Runnable checker = new Runnable() {
+            public void run(){
+                Matcher stringMatcher;
+                try{
+                    StyleContext style = StyleContext.getDefaultStyleContext();
+                    Map<String, Color> patterns = Constants.syntaxColors();
+                    
+                    clearTextColors();
+                    
+                    for(String reg: patterns.keySet()){
+                    	Pattern matcher = Pattern.compile(reg);
+                    	Color color = patterns.get(reg);
+                    	stringMatcher = matcher.matcher(textPane.getDocument().getText(0, textPane.getDocument().getLength()));
+	                    
+//	                    textPane.getStyledDocument().setCharacterAttributes(textPane.getDocument().getLength(), textPane.getDocument().getLength(), style.getEmptySet(), true);
+	                   
+	                    while (stringMatcher.find()){
+	                    	updateTextColor(stringMatcher.start(), stringMatcher.end() - stringMatcher.start(), color);
+	                    }
+                    }
+                }
+                catch (BadLocationException e){
+                    e.printStackTrace();
+                }
+            }
+        };
+        SwingUtilities.invokeLater(checker);
+    }
+	
+
+
+
+
+	public void clearTextColors() {
+		updateTextColor(0, textPane.getText().length(), Color.BLACK);
+	}
+
+
+	public void updateTextColor(int offset, int length, Color c) {
+		StyleContext sc = StyleContext.getDefaultStyleContext();
+		AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, c);
+		textPane.getStyledDocument().setCharacterAttributes(offset, length, aset, true);
+	}
+ 
+
 }

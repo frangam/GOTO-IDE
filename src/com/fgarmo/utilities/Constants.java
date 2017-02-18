@@ -17,9 +17,38 @@
 package com.fgarmo.utilities;
 
 import java.awt.Color;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Constants {
 	public static final Color COLOR_FILE_EXPLORER_NODE			= Color.blue;
 	public static final Color COLOR_LINE_HIGHTLIGH 				= new Color(0.2f, 0.8f, 1, 0.15f);
 	public static final Color COLOR_TEXT_LINE_NUMBER_HIGHTLIGH 	= new Color(0.5f, 0.2f, 1, 1f);
+	
+	//Syntax colors
+	public static final Color COLOR_SYNTAX_GOTO					= new Color(155, 30, 115);
+	public static final Color COLOR_SYNTAX_IF					= new Color(155, 30, 115);
+	public static final Color COLOR_SYNTAX_ASSIGN				= new Color(55, 30, 255);
+	
+	public static Map<String, Color> syntaxColors() {
+        final Map<String, Color> numMap = new HashMap<String, Color>();
+        numMap.put("<-|!=", COLOR_SYNTAX_ASSIGN);
+//        numMap.put("GOTO [A-Za-z][1-9]{1,}[0,9]?", COLOR_SYNTAX_ASSIGN); 
+        numMap.put("GOTO|IF", COLOR_SYNTAX_GOTO);
+        return Collections.unmodifiableMap(numMap);
+    }
+	
+	public static String JAVA_KEYWORDS_REGEX;
+	 
+//	static {
+//		StringBuilder buff = new StringBuilder("");
+//		buff.append("(");
+//		for (String keyword : JAVA_KEYWORDS) {
+//			buff.append("\\b").append(keyword).append("\\b").append("|");
+//		}
+//		buff.deleteCharAt(buff.length() - 1);
+//		buff.append(")");
+//		JAVA_KEYWORDS_REGEX = buff.toString();
+//	}
 }

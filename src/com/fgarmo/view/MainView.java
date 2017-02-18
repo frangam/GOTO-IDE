@@ -26,10 +26,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -332,6 +330,8 @@ public class MainView extends JFrame {
 	
 	private void run(){
 		try{
+			saveCurrentFile();
+			
 			String[] args = openedFiles.toArray(new String[openedFiles.size()+1]);
 			args[args.length-1] = "false";
 			
