@@ -28,27 +28,35 @@ public class Constants {
 	
 	//Syntax colors
 	public static final Color COLOR_SYNTAX_GOTO					= new Color(155, 30, 115);
-	public static final Color COLOR_SYNTAX_IF					= new Color(155, 30, 115);
+	public static final Color COLOR_SYNTAX_IF					= COLOR_SYNTAX_GOTO;
 	public static final Color COLOR_SYNTAX_ASSIGN				= new Color(55, 30, 255);
+	public static final Color COLOR_LEFT_LABEL					= new Color(0, 150, 0);
+	public static final Color COLOR_RIGHT_LABEL					= COLOR_LEFT_LABEL;
+	public static final Color COLOR_VARS						= new Color(150, 80, 130);
 	
 	public static Map<String, Color> syntaxColors() {
         final Map<String, Color> numMap = new HashMap<String, Color>();
+        numMap.put("[XYZ]([1-9][0-9]*)*", COLOR_VARS);
         numMap.put("<-|!=", COLOR_SYNTAX_ASSIGN);
-//        numMap.put("GOTO [A-Za-z][1-9]{1,}[0,9]?", COLOR_SYNTAX_ASSIGN); 
-        numMap.put("GOTO|IF", COLOR_SYNTAX_GOTO);
+        numMap.put("GOTO[\\s]{1,}[A-W]([1-9][0-9]*)*", COLOR_RIGHT_LABEL); //right label
+        numMap.put("\\[[A-W]([1-9][0-9]*)*\\]", COLOR_LEFT_LABEL); //left label
+        numMap.put(GOTO_KEYWORDS_REGEX, COLOR_SYNTAX_GOTO);
         return Collections.unmodifiableMap(numMap);
     }
 	
-	public static String JAVA_KEYWORDS_REGEX;
-	 
-//	static {
-//		StringBuilder buff = new StringBuilder("");
-//		buff.append("(");
-//		for (String keyword : JAVA_KEYWORDS) {
-//			buff.append("\\b").append(keyword).append("\\b").append("|");
-//		}
-//		buff.deleteCharAt(buff.length() - 1);
-//		buff.append(")");
-//		JAVA_KEYWORDS_REGEX = buff.toString();
-//	}
+
+
+    public static final String[] GOTO_KEYWORDS = new String[] { "IF","GOTO" };
+	public static String GOTO_KEYWORDS_REGEX;
+	static {
+		StringBuilder buff = new StringBuilder("");
+		buff.append("(");
+		for (String keyword : GOTO_KEYWORDS) {
+			buff.append("\\b").append(keyword).append("\\b").append("|");
+		}
+		buff.deleteCharAt(buff.length() - 1);
+		buff.append(")");
+		GOTO_KEYWORDS_REGEX = buff.toString();
+	}
+
 }

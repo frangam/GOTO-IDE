@@ -18,6 +18,7 @@ package com.fgarmo.view;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,6 +36,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
@@ -93,6 +95,12 @@ public class TextEditorTab extends JScrollPane {
 		this.file = file;
 		textPane = new JTextPane(); 
 		textPane.getDocument().putProperty(DefaultEditorKit.EndOfLineStringProperty, "\n");
+
+		
+		
+		final Font currFont = textPane.getFont();
+		textPane.setFont(new Font("monospaced", currFont.getStyle(), currFont.getSize()));
+	    
 		setViewportView(textPane);
 		
 		TabStop[] tabs = new TabStop[TOTAL_STOP_TABS];
@@ -214,7 +222,8 @@ public class TextEditorTab extends JScrollPane {
 //	                    textPane.getStyledDocument().setCharacterAttributes(textPane.getDocument().getLength(), textPane.getDocument().getLength(), style.getEmptySet(), true);
 	                   
 	                    while (stringMatcher.find()){
-	                    	updateTextColor(stringMatcher.start(), stringMatcher.end() - stringMatcher.start(), color);
+	                    	boolean bold = reg.equals(Constants.GOTO_KEYWORDS_REGEX);
+	                    	updateTextColor(stringMatcher.start(), stringMatcher.end() - stringMatcher.start(), color, bold);
 	                    }
                     }
                 }
@@ -231,14 +240,22 @@ public class TextEditorTab extends JScrollPane {
 
 
 	public void clearTextColors() {
-		updateTextColor(0, textPane.getText().length(), Color.BLACK);
+		updateTextColor(0, textPane.getText().length(), Color.BLACK, false);
 	}
 
 
-	public void updateTextColor(int offset, int length, Color c) {
+	public void updateTextColor(int offset, int length, Color c, boolean bold) {
 		StyleContext sc = StyleContext.getDefaultStyleContext();
 		AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, c);
-		textPane.getStyledDocument().setCharacterAttributes(offset, length, aset, true);
+	
+		if(bold){
+			MutableAttributeSet asNew = new SimpleAttributeSet(aset.copyAttributes());
+			StyleConstants.setBold(asNew, true);
+			textPane.getStyledDocument().setCharacterAttributes(offset, length, asNew, true);
+		}
+		else{		
+			textPane.getStyledDocument().setCharacterAttributes(offset, length, aset, true);
+		}
 	}
  
 
